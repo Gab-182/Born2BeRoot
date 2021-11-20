@@ -1,14 +1,14 @@
 #!/bin/bash
 
 #[1]
-# uname -a
+Architecture=$(uname -a)
 # ---------
 # The uname command displays several system information including,
 # the Linux kernel architecture, name version, and release.
 # -a      Behave as though all of the options -mnrsv were specified.
 ##############################################################################################################
 # [2]
-# grep "physical id" /proc/cpuinfo | sort | uniq | wc -l)
+CPU_physical=$(grep "physical id" /proc/cpuinfo | sort | uniq | wc -l)
 # --------------------------------------------------------
 # The file /proc/cpuinfo displays what type of processor your system is running including the number of CPUs present
 # sort  ------->  The sort utility sorts text and binary files by lines.
@@ -18,7 +18,7 @@
 # -l    ------->  -l      The number of lines in each input file is written to the standard output. 
 ##############################################################################################################
 # [3]
-# grep "^processor" /proc/cpuinfo | wc -l)
+vCPU=$(grep "^processor" /proc/cpuinfo | wc -l)
 # ----------------------------------------
 # The file /proc/cpuinfo displays what type of processor your system is running including the number of CPUs present
 # wc    ------->  The wc utility displays the number of lines,
@@ -73,38 +73,73 @@ CPU_load=$(top -bn1 | grep load | awk '{printf "%.1f%%\n", $(NF-2)}')
 #### load average over the last 5 minutes: 0.70 ______________________________________________|     |
 #### load average over the last 15 minutes: 5.09 ___________________________________________________|
 
-# (NF-2) -----> 
+# (NF-2) -----> That is mean Take the load average in the last 1 minute.
 #
 ##############################################################################################################
-lb=$(who -b | awk '$1 == "system" {print $3 " " $4}')
+# [7]
+Last_Boot=$(who -b | awk '$1 == "system" {print $3 " " $4}')
+#
+# who ------> The who utility displays a list of all users currently logged on.
+# -b  ------> Just show the time of last system boot.  
+#
+# awk '$1 == "system" {print $3 " " $4}' -----> That command basically says that:
+#												If the first field contain the word system print the third 
+#												and the fourth field.
+#
 ##############################################################################################################
-lvmt=$(lsblk | grep "lvm" | wc -l)
+# [8]
+Lvm_check=$(lsblk | grep "lvm" | wc -l)
+LVM_use=$(if [ $Lvm_check -eq 0 ]; then echo no; else echo yes; fi)
+#
+# The second command means that if the number of lines that contain the word (lvm) is (0) then print (no),
+# else, print (yes).
+#
 ##############################################################################################################
-lvmu=$(if [ $lvmt -eq 0 ]; then echo no; else echo yes; fi)
+# [9]
+Connexions_TCP=$(cat /proc/net/sockstat | awk '$1 == "TCP:" {printf "%d ESTABLISHED\n", $3}')
+#
+# Read the sockstat file, then print from the (TCP, 1st field) the third field then print ESTABLISHED in the end.
+#
 ##############################################################################################################
-ctcp=$(cat /proc/net/sockstat{,6} | awk '$1 == "TCP:" {print $3}')
+# [10]
+User_log=$(who | wc -l)
+#
+# who -------> The who utility displays a list of all users currently logged on, showing for each user the login name,
+#			   tty name, the date and time of login, and hostname if not local
+
+# wc -l -------> display the number of lines in each input file is written to the standard output.
+#
 ##############################################################################################################
-ulog=$(users | wc -w)
+# [11]
+IP=$(hostname -I)
+Mac=$(ip addr | awk '$1 == "link/ether" {print $2}')
+
+# hostname ----> prints the name of the current host.
+# -I ----------> To show the IP address for the hostname.
+#
+# ip addr -----> Type the following command to list and show all ip address associated on on all network 
+# interfaces
+#
 ##############################################################################################################
-ip=$(hostname -I)
-##############################################################################################################
-mac=$(ip link show | awk '$1 == "link/ether" {print $2}')
-##############################################################################################################
+# [12]
 cmds=$(journalctl _COMM=sudo | grep COMMAND | wc -l)
+# journalctl _COMM=sudo: -------> with the journald daemon, which handles all of the messages produced by the kernel,
+#								  initrd, services, etc. 
+# 
 ##############################################################################################################
 # The wall utility displays the contents of file or,by default, its standard input, on the 
 # terminals of all currently logged in users.
 
-wall "#Architecture: uname -a
-	#CPU physical: grep "physical id" /proc/cpuinfo | sort | uniq | wc -l
-	#vCPU: grep "^processor" /proc/cpuinfo | wc -l
+wall "#Architecture: $Architecture
+	#CPU physical: $CPU_physical
+	#vCPU: $vCPU
 	#Memory Usage: $used_ram/${free_ram}MB ($percent_ram%)
 	#Disk Usage: $Disk_usage
 	#CPU load: $CPU_load
-	#Last boot: $lb
-	#LVM use: $lvmu
-	#Connexions TCP: $ctcp ESTABLISHED
-	#User log: $ulog
-	#Network: IP $ip ($mac)
+	#Last boot: $Last_Boot
+	#LVM use: $LVM_use
+	#Connexions TCP: $Connexions_TCP 
+	#User log: $User_log
+	#Network: IP $IP ($Mac)
 	#Sudo: $cmds cmd" # broadcast our system information on all terminals
 ##############################################################################################################
