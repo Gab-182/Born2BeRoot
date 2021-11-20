@@ -48,7 +48,7 @@ Disk_usage=$(df -h | awk '$NF=="/"{printf "%d/%dGB (%s)\n", $3,$2,$5}')
 #             any of a set of patterns specified  literally  in prog  or  in  one  or  more files 
 #	          specified as -f progfile.
  
-# NF --------> number of fields in the current record
+# NF --------> NF command keeps a count of the number of fields within the current input record. 
 
 # NF=="/" ------> scan the root directory only.
 
@@ -62,8 +62,18 @@ CPU_load=$(top -bn1 | grep load | awk '{printf "%.1f%%\n", $(NF-2)}')
 
 # top ---------> display and update sorted information about processes.
 
-# -bn1 --------> 
-#
+# -bn1 --------> The -n option specifies the maximum number of iterations and -b enables batch mode operation,
+#                which could be useful for sending output from top to a file.
+#				 So, Basically -bn1: is just to save the result in an outbut file to we can deal with
+#				 later.
+# NOTE:
+#======
+# top -bn1 | grep load ------> will give you this result for example : [load average: 1.05, 0.70, 5.09]
+#### load average over the last 1 minute: 1.05 _________________________________________|     |     |
+#### load average over the last 5 minutes: 0.70 ______________________________________________|     |
+#### load average over the last 15 minutes: 5.09 ___________________________________________________|
+
+# (NF-2) -----> 
 #
 ##############################################################################################################
 lb=$(who -b | awk '$1 == "system" {print $3 " " $4}')
